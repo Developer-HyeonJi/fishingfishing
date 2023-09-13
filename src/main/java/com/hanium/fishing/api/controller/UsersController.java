@@ -23,6 +23,8 @@ public class UsersController {
             @ApiResponse(code = 200, message = "success"),
             @ApiResponse(code = 409, message = "이미 존재하는 아이디입니다")
     })
+
+    @ApiOperation(value = "회원 정보 조회")
     @GetMapping("/check/{user-id}")
     public ResponseEntity<String> checkDuplicate(@PathVariable(name = "user-id") String userId) {
 
@@ -54,5 +56,21 @@ public class UsersController {
     @GetMapping("/reissue")
     public ResponseEntity<TokenResponseDto> reissue(@RequestHeader("RefreshToken") String refreshToken) {
         return ResponseEntity.ok().body(usersService.reissue(refreshToken));
+    }
+
+    @ApiOperation(value = "회원 정보 조회")
+    @GetMapping("/users/{user-id}") // 추가
+    public ResponseEntity<UserResponseDto> getUserInfo(@PathVariable(name = "user-id") String userId) {
+        // UsersService를 사용하여 회원 정보 조회
+        UserResponseDto userInfo = usersService.getUserInfo(userId);
+        return ResponseEntity.ok().body(userInfo);
+    }
+
+    @ApiOperation(value = "회원 정보 수정")
+    @PutMapping("/users/{user-id}") // 추가
+    public ResponseEntity<String> updateUser(@PathVariable(name = "user-id") String userId, @RequestBody UpdateUserRequestDto updateUserDto) {
+        // UsersService를 사용하여 회원 정보 수정
+        String resultMessage = usersService.updateUser(userId, updateUserDto);
+        return ResponseEntity.ok().body(resultMessage);
     }
 }
