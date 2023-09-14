@@ -6,13 +6,13 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class UsersResponseDto {
+public class UserResponseDto {
     private Long userId;
     private String nickName;
     private String profileImageUrl;
 
-    public static UsersResponseDto from(Users user) {
-        return UsersResponseDto.builder()
+    public static UserResponseDto fromEntity(Users user) {
+        return UserResponseDto.builder()
                 .userId(user.getId())
                 .nickName(user.getNickName())
                 .profileImageUrl(user.getProfileImageUrl())

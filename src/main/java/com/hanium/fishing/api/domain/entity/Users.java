@@ -1,5 +1,7 @@
 package com.hanium.fishing.api.domain.entity;
 
+import com.hanium.fishing.api.domain.entity.Board;
+import com.hanium.fishing.api.domain.entity.Likes;
 import com.hanium.fishing.common.BaseTimeEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,4 +32,12 @@ public class Users extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Likes> likes = new ArrayList<>();
+
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
 }
