@@ -10,12 +10,16 @@ public class UserResponseDto {
     private Long userId;
     private String nickName;
     private String profileImageUrl;
+    private String accessToken;
+    private String refreshToken;
 
-    public static UserResponseDto fromEntity(Users user) {
+    public static UserResponseDto from(Users user, String accessToken, String refreshToken) {
         return UserResponseDto.builder()
                 .userId(user.getId())
                 .nickName(user.getNickName())
                 .profileImageUrl(user.getProfileImageUrl())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 }

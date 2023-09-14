@@ -87,24 +87,23 @@ public class UsersService {
 
     public TokenResponseDto login(String userId, String password) {
         Users user = usersRepository.findByUserId(userId).orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND));
-        if (!encoder.matches(password, user.getPassword( ))) {
+        if (!encoder.matches(password, user.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
-        TokenResponseDto token = JwtTokenUtil.createAllToken(user.getUserId( ), key);
+        TokenResponseDto token = JwtTokenUtil.createAllToken(user.getUserId(), key);
 
         Optional<RefreshToken> refreshToken = refreshTokenRepository.findByUserId(userId);
 
-        if (refreshToken.isPresent( )) {
-            refreshTokenRepository.save(refreshToken.get( ).updateToken(token.getRefreshToken( )));
+        if (refreshToken.isPresent()) {
+            refreshTokenRepository.save(refreshToken.get().updateToken(token.getRefreshToken()));
         } else {
-            RefreshToken newRefreshToken = new RefreshToken(userId, token.getRefreshToken( ));
+            RefreshToken newRefreshToken = new RefreshToken(userId, token.getRefreshToken());
             refreshTokenRepository.save(newRefreshToken);
         }
-        return TokenResponseDto.builder( )
-                .accessToken(token.getAccessToken( ))
-                .refreshToken(token.getRefreshToken( ))
-                .build( );
+
+        return token;
     }
+
 
     public TokenResponseDto reissue(String refreshToken) {
         refreshToken = refreshToken.split(" ")[1];
