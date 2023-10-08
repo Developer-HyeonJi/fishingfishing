@@ -16,7 +16,8 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다"),
     EXPIRED_TOKEN(UNAUTHORIZED, "만료된 토큰입니다"),
     DUPLICATE_USERID(CONFLICT, "이미 존재하는 아이디입니다"),
-    USER_NOT_FOUND(NOT_FOUND, "사용자를 찾을 수 없습니다");
+    USER_NOT_FOUND(NOT_FOUND, "사용자를 찾을 수 없습니다"), 
+    FAIL_IMAGE_UPLOAD(INTERNAL_SERVER_ERROR, "이미지를 찾을 수 없습니다");
 
     private final HttpStatus httpStatus;
     private final String message;

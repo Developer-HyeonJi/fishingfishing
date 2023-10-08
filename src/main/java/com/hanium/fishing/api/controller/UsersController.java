@@ -3,11 +3,13 @@ package com.hanium.fishing.api.controller;
 import com.hanium.fishing.api.dto.request.JoinRequestDto;
 import com.hanium.fishing.api.dto.request.LoginRequestDto;
 import com.hanium.fishing.api.dto.request.UpdateUserRequestDto;
+import com.hanium.fishing.api.dto.response.StringResponseDto;
 import com.hanium.fishing.api.dto.response.TokenResponseDto;
 import com.hanium.fishing.api.dto.response.UserResponseDto;
 import com.hanium.fishing.api.service.UsersService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
+import com.hanium.fishing.api.service.S3Service;
 import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile; // 멀티파트 파일 �
 public class UsersController {
 
     private final UsersService usersService;
+    private S3Service s3Service;
 
     @ApiOperation(value = "중복 확인")
     @ApiResponses({
@@ -34,11 +37,9 @@ public class UsersController {
     @ApiOperation(value = "회원 가입")
     @PostMapping(value = "/join", produces = "application/text;charset=utf-8")
     public ResponseEntity<String> join(
-            @RequestPart JoinRequestDto joinDto,
-            @RequestPart MultipartFile profileImage // 프로필 이미지를 받을 멀티파트 파일 필드 추가
+            @RequestPart JoinRequestDto joinDto
     ) {
-        String resultMessage = usersService.join(joinDto, profileImage);
-        return ResponseEntity.ok().body(resultMessage);
+        return ResponseEntity.ok().body("회원가입이 완료되었습니다.");
     }
 
     @ApiOperation(value = "로그인")
@@ -70,10 +71,10 @@ public class UsersController {
     @PutMapping("/users/{user-id}")
     public ResponseEntity<String> updateUser(
             @PathVariable(name = "user-id") String userId,
-            @RequestPart UpdateUserRequestDto updateUserDto,
-            @RequestPart MultipartFile profileImage // 프로필 이미지를 받을 멀티파트 파일 필드 추가
+            @RequestPart UpdateUserRequestDto updateUserDto
     ) {
-        String resultMessage = usersService.updateUser(userId, updateUserDto, profileImage);
+        String resultMessage = usersService.updateUser(userId, updateUserDto);
         return ResponseEntity.ok().body(resultMessage);
     }
+
 }

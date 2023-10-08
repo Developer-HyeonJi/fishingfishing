@@ -10,6 +10,7 @@ import com.hanium.fishing.api.dto.response.TokenResponseDto;
 import com.hanium.fishing.api.dto.response.UserResponseDto;
 import com.hanium.fishing.exception.CustomException;
 import com.hanium.fishing.exception.ErrorCode;
+import com.hanium.fishing.api.dto.response.StringResponseDto;
 import com.hanium.fishing.utils.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,74 +36,45 @@ public class UsersService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Value("${jwt.secret}")
-    private String jwtSecret;
+    private String key;
 
-    public void checkDuplicate(String userId) {
-        if (usersRepository.findByUserId(userId).isPresent()) {
+    public StringResponseDto checkDuplicate(String userId) {
+        if(usersRepository.findByUserId(userId).isPresent()) {
             throw new CustomException(ErrorCode.DUPLICATE_USERID);
         }
+        return StringResponseDto.of("사용 가능한 아이디입니다.");
     }
 
-    public String join(JoinRequestDto joinDto, MultipartFile profileImage) {
-        String profileImageUrl = processProfileImage(profileImage);
-        Users user = Users.builder()
-                .userId(joinDto.getUserId())
-                .password(encoder.encode(joinDto.getPassword()))
-                .nickName(joinDto.getNickName())
-                .profileImageUrl(profileImageUrl)
-                .build();
-        usersRepository.save(user);
+    public String join(JoinRequestDto joinDto) {
+        usersRepository.save(JoinRequestDto.toEntity(joinDto.getUserId(), encoder.encode(joinDto.getPassword()), joinDto.getNickName(), joinDto.getProfileImageUrl()));
         return joinDto.getUserId() + "님이 성공적으로 회원가입되었습니다.";
     }
 
-    private String processProfileImage(MultipartFile profileImage) {
-        if (profileImage == null || profileImage.isEmpty()) {
-            return null;
-        }
-
-        try {
-            String originalFilename = profileImage.getOriginalFilename();
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String newFilename = UUID.randomUUID().toString() + fileExtension;
-
-            String uploadDirectory = "path/to/upload/directory";
-            Path filePath = Paths.get(uploadDirectory, newFilename);
-
-            Files.write(filePath, profileImage.getBytes());
-
-            String baseUrl = "http://example.com/images";
-            return baseUrl + "/" + newFilename;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     public TokenResponseDto login(String userId, String password) {
-        Users user = usersRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND));
-
-        if (!encoder.matches(password, user.getPassword())) {
+        Users user = usersRepository.findByUserId(userId).orElseThrow(() -> new CustomException(ErrorCode.USERID_NOT_FOUND));
+        if(!encoder.matches(password, user.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
+        TokenResponseDto token = JwtTokenUtil.createAllToken(user.getUserId(), key);
 
-        TokenResponseDto token = JwtTokenUtil.createAllToken(user.getUserId(), jwtSecret);
+        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByUserId(userId);
 
-        refreshTokenRepository.findByUserId(userId).ifPresentOrElse(
-                refreshToken -> refreshTokenRepository.save(refreshToken.updateToken(token.getRefreshToken())),
-                () -> {
-                    RefreshToken newRefreshToken = new RefreshToken(userId, token.getRefreshToken());
-                    refreshTokenRepository.save(newRefreshToken);
-                }
-        );
-
-        return token;
+        if(refreshToken.isPresent()) {
+            refreshTokenRepository.save(refreshToken.get().updateToken(token.getRefreshToken()));
+        } else {
+            RefreshToken newRefreshToken = new RefreshToken(userId,token.getRefreshToken());
+            refreshTokenRepository.save(newRefreshToken);
+        }
+        return TokenResponseDto.builder()
+                .accessToken(token.getAccessToken())
+                .refreshToken(token.getRefreshToken())
+                .build();
     }
 
     public TokenResponseDto reissue(String refreshToken) {
         refreshToken = refreshToken.split(" ")[1];
 
-        if (JwtTokenUtil.isExpired(refreshToken, jwtSecret)) {
+        if (JwtTokenUtil.isExpired(refreshToken, key)) {
             throw new CustomException(ErrorCode.EXPIRED_TOKEN);
         }
 
@@ -112,7 +84,7 @@ public class UsersService {
         RefreshToken token = refreshTokenRepository.findByUserId(inputToken.getUserId())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REFRESH_TOKEN));
 
-        TokenResponseDto newToken = JwtTokenUtil.createAllToken(inputToken.getUserId(), jwtSecret);
+        TokenResponseDto newToken = JwtTokenUtil.createAllToken(inputToken.getUserId(), key);
         refreshTokenRepository.save(token.updateToken(newToken.getRefreshToken()));
 
         return TokenResponseDto.builder()
@@ -137,7 +109,7 @@ public class UsersService {
                 .build();
     }
 
-    public String updateUser(String userId, UpdateUserRequestDto updateUserRequestDto, MultipartFile profileImage) {
+    public String updateUser(String userId, UpdateUserRequestDto updateUserRequestDto) {
         Users user = usersRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -145,9 +117,8 @@ public class UsersService {
             user.setNickName(updateUserRequestDto.getNickName());
         }
 
-        if (profileImage != null) {
-            String newProfileImageUrl = processProfileImage(profileImage);
-            user.setProfileImageUrl(newProfileImageUrl);
+        if (updateUserRequestDto.getProfileImageUrl() != null) {
+            user.setProfileImageUrl(updateUserRequestDto.getProfileImageUrl());
         }
 
         usersRepository.save(user);

@@ -13,7 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = { ConstraintViolationException.class, DataIntegrityViolationException.class})
-    protected ResponseEntity<ErrorResponse> handleDataException() {
+    protected ResponseEntity<ErrorResponse> handleDataException(Exception ex) {
         return ErrorResponse.toResponseEntity(ErrorCode.DUPLICATE_RESOURCE);
     }
 
